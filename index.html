@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CryptoTrade AI - Nigeria</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Auth Screens -->
+    <div id="authScreen" class="auth-screen">
+        <div class="auth-container">
+            <div class="auth-logo">
+                <div class="logo-icon-large">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    </svg>
+                </div>
+                <h1>Crypto<span class="gradient-text">AI</span></h1>
+                <p>AI-Powered Crypto Trading</p>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm" class="auth-form">
+                <h2>Welcome Back</h2>
+                <p class="auth-subtitle">Login to access your account</p>
+
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" id="loginEmail" placeholder="Enter your email">
+                </div>
+
+                <div class="input-group">
+                    <label>Password</label>
+                    <div class="password-input">
+                        <input type="password" id="loginPassword" placeholder="Enter your password">
+                        <button type="button" onclick="togglePassword('loginPassword')" class="toggle-password">👁</button>
+                    </div>
+                </div>
+
+                <div class="auth-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" onclick="showForgotPassword()" class="forgot-link">Forgot Password?</a>
+                </div>
+
+                <button onclick="login()" class="auth-btn">Login</button>
+
+                <p class="auth-switch">Don't have an account? <a href="#" onclick="showSignup()">Sign Up</a></p>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signupForm" class="auth-form hidden">
+                <h2>Create Account</h2>
+                <p class="auth-subtitle">Start trading with AI</p>
+
+                <div class="input-group">
+                    <label>Full Name</label>
+                    <input type="text" id="signupName" placeholder="Enter your full name">
+                </div>
+
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" id="signupEmail" placeholder="Enter your email">
+                </div>
+
+                <div class="input-group">
+                    <label>Phone Number</label>
+                    <div class="phone-input">
+                        <span class="country-code">+234</span>
+                        <input type="tel" id="signupPhone" placeholder="801 234 5678">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Password</label>
+                    <div class="password-input">
+                        <input type="password" id="signupPassword" placeholder="Create password (min 8 chars)">
+                        <button type="button" onclick="togglePassword('signupPassword')" class="toggle-password">👁</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Confirm Password</label>
+                    <div class="password-input">
+                        <input type="password" id="signupConfirmPassword" placeholder="Confirm your password">
+                        <button type="button" onclick="togglePassword('signupConfirmPassword')" class="toggle-password">👁</button>
+                    </div>
+                </div>
+
+                <div class="terms-check">
+                    <label>
+                        <input type="checkbox" id="agreeTerms">
+                        <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
+                    </label>
+                </div>
+
+                <button onclick="signup()" class="auth-btn">Create Account</button>
+
+                <p class="auth-switch">Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+            </div>
+
+            <!-- Forgot Password Form -->
+            <div id="forgotForm" class="auth-form hidden">
+                <h2>Reset Password</h2>
+                <p class="auth-subtitle">Enter your email to receive reset instructions</p>
+
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" id="forgotEmail" placeholder="Enter your email">
+                </div>
+
+                <button onclick="sendResetLink()" class="auth-btn">Send Reset Link</button>
+
+                <p class="auth-switch"><a href="#" onclick="showLogin()">← Back to Login</a></p>
+            </div>
+
+            <!-- Reset Password Form -->
+            <div id="resetForm" class="auth-form hidden">
+                <h2>Create New Password</h2>
+                <p class="auth-subtitle">Enter your new password</p>
+
+                <div class="input-group">
+                    <label>New Password</label>
+                    <div class="password-input">
+                        <input type="password" id="newPassword" placeholder="Enter new password">
+                        <button type="button" onclick="togglePassword('newPassword')" class="toggle-password">👁</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Confirm New Password</label>
+                    <div class="password-input">
+                        <input type="password" id="confirmNewPassword" placeholder="Confirm new password">
+                        <button type="button" onclick="togglePassword('confirmNewPassword')" class="toggle-password">👁</button>
+                    </div>
+                </div>
+
+                <button onclick="resetPassword()" class="auth-btn">Reset Password</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App (Hidden until login) -->
+    <div id="mainApp" class="hidden">
+        <header class="sticky-header">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    </svg>
+                </div>
+                <span class="logo-text">Crypto<span class="gradient-text">AI</span></span>
+            </div>
+            <div class="header-actions">
+                <button onclick="showDepositModal()" class="deposit-header-btn">+ Deposit</button>
+                <button onclick="toggleWallet()" class="wallet-btn">
+                    <span id="walletBtnText">Connect Wallet</span>
+                </button>
+                <button onclick="logout()" class="logout-btn" title="Logout">🚪</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Investment Status Banner -->
+            <div id="investmentBanner" class="investment-banner hidden">
+                <div class="investment-content">
+                    <div class="investment-info">
+                        <span class="investment-label">Active Investment</span>
+                        <span class="investment-amount">₦<span id="investedAmount">0</span></span>
+                        <span class="investment-usd">($<span id="investedUsd">0.00</span>)</span>
+                    </div>
+                    <div class="investment-status">
+                        <span class="status-badge active">Active</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- No Investment State -->
+            <div id="noInvestmentState" class="no-investment">
+                <div class="start-trading-card">
+                    <div class="start-icon">🚀</div>
+                    <h2>Start Trading with AI</h2>
+                    <p>Minimum investment: <strong>₦5,000</strong> (~$3.30)</p>
+                    <p class="sub-text">Pay with Bitcoin, Ethereum, or USDT</p>
+                    <button onclick="showDepositModal()" class="btn-start">Make First Deposit</button>
+                    <div class="payment-methods">
+                        <span class="payment-badge">BTC</span>
+                        <span class="payment-badge">ETH</span>
+                        <span class="payment-badge">USDT</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trading Dashboard (Hidden until investment) -->
+            <div id="tradingDashboard" class="hidden">
+                <div class="balance-card">
+                    <div class="balance-bg"></div>
+                    <div class="balance-content">
+                        <p class="balance-label">Trading Balance</p>
+                        <h1 class="balance-amount">$<span id="totalBalance">0.00</span></h1>
+                        <div class="balance-change">
+                            <span id="balanceChange" class="change-positive">+0.00%</span>
+                            <span class="time-label">24h</span>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button onclick="showDepositModal()" class="btn-primary">Add Funds</button>
+                        <button onclick="showWithdrawModal()" class="btn-secondary">Withdraw</button>
+                    </div>
+                </div>
+
+                <div class="ai-banner">
+                    <div class="ai-bg"></div>
+                    <div class="ai-content">
+                        <div class="ai-icon-wrapper">
+                            <div class="pulse-ring"></div>
+                            <svg class="ai-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                            </svg>
+                        </div>
+                        <div class="ai-text">
+                            <p class="ai-label">AI PREDICTION</p>
+                            <p id="aiSignal" class="ai-message">Bullish momentum detected</p>
+                        </div>
+                        <span id="aiConfidence" class="ai-badge">87%</span>
+                    </div>
+                </div>
+
+                <div class="coin-selector-container">
+                    <div class="coin-selector" id="coinSelector"></div>
+                </div>
+
+                <div class="chart-section">
+                    <div class="chart-header">
+                        <div>
+                            <h2 id="currentCoin" class="coin-pair">BTC/USDT</h2>
+                            <p id="currentPrice" class="current-price">$0.00</p>
+                        </div>
+                        <div class="timeframe-buttons">
+                            <button onclick="changeTimeframe('1m')" class="tf-btn active" data-tf="1m">1m</button>
+                            <button onclick="changeTimeframe('15m')" class="tf-btn" data-tf="15m">15m</button>
+                            <button onclick="changeTimeframe('1h')" class="tf-btn" data-tf="1h">1h</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="tradingChart"></canvas>
+                    </div>
+                    <div class="chart-footer">
+                        <span>AI Trend: <span id="trendIndicator" class="trend-up">↑ Rising</span></span>
+                        <span>Vol: <span id="volumeIndicator">--</span></span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">Order Book</h3>
+                    <div class="order-book" id="orderBook"></div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title">Recent Trades</h3>
+                    <div class="recent-trades" id="recentTrades"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Trading Panel (Only show when invested) -->
+        <div id="tradingPanel" class="trading-panel hidden">
+            <button onclick="openTradeModal('buy')" class="btn-buy">Buy</button>
+            <button onclick="openTradeModal('sell')" class="btn-sell">Sell</button>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="depositModal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeDepositModal()"></div>
+        <div class="modal-content slide-up">
+            <div class="modal-handle"></div>
+            <h3 class="modal-title">Deposit Funds</h3>
+            <div class="modal-body">
+                <div class="deposit-info">
+                    <div class="minimum-deposit">
+                        <span class="label">Minimum Deposit</span>
+                        <span class="amount">₦5,000</span>
+                        <span class="usd">≈ $<span id="minDepositUsd">3.30</span> USD</span>
+                    </div>
+                </div>
+
+                <div class="payment-method-selector">
+                    <label>Select Payment Method</label>
+                    <div class="payment-options">
+                        <button onclick="selectPayment('btc')" class="payment-option" data-method="btc">
+                            <div class="payment-icon btc">₿</div>
+                            <div class="payment-info">
+                                <span class="payment-name">Bitcoin</span>
+                                <span class="payment-network">BTC Network</span>
+                            </div>
+                        </button>
+                        <button onclick="selectPayment('eth')" class="payment-option" data-method="eth">
+                            <div class="payment-icon eth">Ξ</div>
+                            <div class="payment-info">
+                                <span class="payment-name">Ethereum</span>
+                                <span class="payment-network">ERC-20</span>
+                            </div>
+                        </button>
+                        <button onclick="selectPayment('usdt')" class="payment-option active" data-method="usdt">
+                            <div class="payment-icon usdt">₮</div>
+                            <div class="payment-info">
+                                <span class="payment-name">USDT</span>
+                                <span class="payment-network">TRC-20 / ERC-20</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="deposit-amount-section">
+                    <label>Enter Amount (₦)</label>
+                    <input type="number" id="depositAmountNgn" class="amount-input" placeholder="5000" min="5000" oninput="calculateCryptoAmount()">
+                    <div class="conversion-display">
+                        <span>≈ <span id="cryptoAmount">0.00</span> <span id="cryptoSymbol">USDT</span></span>
+                        <span class="rate">Rate: ₦<span id="currentRate">1500</span> per USD</span>
+                    </div>
+                </div>
+
+                <div id="paymentDetails" class="payment-details hidden">
+                    <div class="qr-section">
+                        <div class="qr-code" id="qrCode">
+                            <!-- QR Code placeholder -->
+                            <div class="qr-placeholder">QR CODE</div>
+                        </div>
+                        <p class="qr-instruction">Scan with your wallet app</p>
+                    </div>
+
+                    <div class="wallet-address-section">
+                        <label>Wallet Address</label>
+                        <div class="address-box">
+                            <input type="text" id="walletAddress" readonly value="0x...">
+                            <button onclick="copyAddress()" class="copy-btn">📋</button>
+                        </div>
+                    </div>
+
+                    <div class="network-info">
+                        <span class="network-badge" id="networkBadge">TRC-20</span>
+                        <span class="confirmations">Confirmations required: 3</span>
+                    </div>
+                </div>
+
+                <button onclick="processDeposit()" class="btn-confirm" id="depositBtn">Generate Payment Address</button>
+
+                <div class="deposit-warning">
+                    <p>⚠️ Only send <span id="warningNetwork">USDT</span> to this address. Sending other assets may result in permanent loss.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div id="withdrawModal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeWithdrawModal()"></div>
+        <div class="modal-content slide-up">
+            <div class="modal-handle"></div>
+            <h3 class="modal-title">Withdraw Funds</h3>
+            <div class="modal-body">
+                <div class="balance-display">
+                    <span>Available: $<span id="withdrawAvailable">0.00</span></span>
+                </div>
+
+                <div class="input-group">
+                    <label>Select Asset</label>
+                    <select id="withdrawAsset" class="asset-select">
+                        <option value="btc">Bitcoin (BTC)</option>
+                        <option value="eth">Ethereum (ETH)</option>
+                        <option value="usdt">Tether (USDT)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Wallet Address</label>
+                    <input type="text" id="withdrawAddress" class="address-input" placeholder="Enter recipient wallet address">
+                </div>
+
+                <div class="input-group">
+                    <label>Amount (USD)</label>
+                    <input type="number" id="withdrawAmount" class="amount-input" placeholder="0.00">
+                    <span class="input-hint">Min: $10 | Fee: 1%</span>
+                </div>
+
+                <div class="withdraw-details">
+                    <div class="detail-row">
+                        <span>You Receive</span>
+                        <span id="withdrawReceive">0.00</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Network Fee</span>
+                        <span id="withdrawFee">0.00</span>
+                    </div>
+                </div>
+
+                <button onclick="processWithdrawal()" class="btn-confirm">Request Withdrawal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trade Modal -->
+    <div id="tradeModal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeTradeModal()"></div>
+        <div class="modal-content slide-up">
+            <div class="modal-handle"></div>
+            <h3 id="tradeTitle" class="modal-title">Buy BTC</h3>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label>Amount (USD)</label>
+                    <input type="number" id="tradeAmount" class="amount-input" placeholder="0.00">
+                </div>
+                <div class="percentage-buttons">
+                    <button onclick="setTradeAmount(25)">25%</button>
+                    <button onclick="setTradeAmount(50)">50%</button>
+                    <button onclick="setTradeAmount(75)">75%</button>
+                    <button onclick="setTradeAmount(100)">100%</button>
+                </div>
+                <div class="trade-details">
+                    <div class="detail-row">
+                        <span>Price</span>
+                        <span id="modalPrice">$0.00</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>You Get</span>
+                        <span id="modalReceive">0.00000000 BTC</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Fee (0.1%)</span>
+                        <span id="modalFee">$0.00</span>
+                    </div>
+                </div>
+                <button id="confirmTradeBtn" onclick="executeTrade()" class="btn-confirm">Confirm Buy</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wallet Modal -->
+    <div id="walletModal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeWalletModal()"></div>
+        <div class="modal-content slide-up">
+            <div class="modal-handle"></div>
+            <h3 class="modal-title">Connect Wallet</h3>
+            <div class="wallet-list">
+                <button onclick="connectWallet('metamask')" class="wallet-option">
+                    <div class="wallet-icon metamask">M</div>
+                    <div class="wallet-info">
+                        <p class="wallet-name">MetaMask</p>
+                        <p class="wallet-desc">Connect to MetaMask</p>
+                    </div>
+                </button>
+                <button onclick="connectWallet('trust')" class="wallet-option">
+                    <div class="wallet-icon trust">T</div>
+                    <div class="wallet-info">
+                        <p class="wallet-name">Trust Wallet</p>
+                        <p class="wallet-desc">Connect to Trust Wallet</p>
+                    </div>
+                </button>
+                <button onclick="connectWallet('phantom')" class="wallet-option">
+                    <div class="wallet-icon phantom">P</div>
+                    <div class="wallet-info">
+                        <p class="wallet-name">Phantom</p>
+                        <p class="wallet-desc">Connect to Phantom</p>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast hidden">
+        <span id="toastIcon"></span>
+        <span id="toastMessage"></span>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="script.js"></script>
+</body>
+</html>
