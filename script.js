@@ -1081,7 +1081,7 @@ document.addEventListener('keydown', (e) => {
 
 const NOWPAYMENTS_CONFIG = {
     apiKey: 'ACX1YYE-Y334N39-K3CAP2S-FT0869V',
-    payoutAddress: 'YOUR_BUSHA_LTC_ADDRESS_HERE', // ⚠️ REPLACE THIS WITH YOUR REAL LTC ADDRESS!
+    payoutAddress: 'ltc1qqjpdqp3zmynnd8ww2umrr69gd4h5phkzf7jlee', // ⚠️ REPLACE THIS WITH YOUR REAL LTC ADDRESS!
     minDeposit: 5
 };
 
