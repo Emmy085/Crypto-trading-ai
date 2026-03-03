@@ -1076,3 +1076,205 @@ document.addEventListener('keydown', (e) => {
         closeNowPaymentsModal();
     }
 });
+
+// ==================== NOWPAYMENTS DIRECT INTEGRATION (NO SERVER) ====================
+
+const NOWPAYMENTS_CONFIG = {
+    apiKey: 'ACX1YYE-Y334N39-K3CAP2S-FT0869V',
+    payoutAddress: 'YOUR_BUSHA_LTC_ADDRESS_HERE', // ⚠️ REPLACE THIS WITH YOUR REAL LTC ADDRESS!
+    minDeposit: 5
+};
+
+// Create payment directly with NOWPayments
+async function createNowPayment(amountUSD) {
+    try {
+        const payload = {
+            price_amount: amountUSD,
+            price_currency: 'usd',
+            pay_currency: 'ltc',
+            order_id: `ORD-${Date.now()}`,
+            order_description: `Crypto AI Investment`,
+            ipn_callback_url: 'https://webhook.site/your-unique-url',
+            success_url: window.location.href,
+            cancel_url: window.location.href,
+            is_fixed_rate: true,
+            payout_address: NOWPAYMENTS_CONFIG.payoutAddress,
+            payout_currency: 'ltc'
+        };
+
+        const response = await fetch('https://api.nowpayments.io/v1/payment', {
+            method: 'POST',
+            headers: {
+                'x-api-key': NOWPAYMENTS_CONFIG.apiKey,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error:', errorText);
+            throw new Error('Payment service error');
+        }
+
+        const data = await response.json();
+        
+        return {
+            success: true,
+            paymentId: data.payment_id,
+            payAddress: data.pay_address,
+            payAmount: data.pay_amount,
+            paymentUrl: data.invoice_url
+        };
+
+    } catch (error) {
+        console.error('Payment creation failed:', error);
+        showToast('❌', 'Cannot connect to payment service. Check your internet.');
+        return null;
+    }
+}
+
+// Override the old deposit function
+function showDepositModal() {
+    if (!state.isLoggedIn) {
+        showToast('❌', 'Please login first');
+        return;
+    }
+    showNowPaymentsModal();
+}
+
+function showNowPaymentsModal() {
+    let modal = document.getElementById('nowpaymentsModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'nowpaymentsModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-overlay" onclick="closeNowPaymentsModal()"></div>
+            <div class="modal-content slide-up">
+                <div class="modal-handle"></div>
+                <h3 class="modal-title">Deposit via Crypto</h3>
+                <div class="modal-body">
+                    <div class="deposit-info" style="background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px; text-align: center;">
+                        <span style="display: block; font-size: 12px; color: #8b92a8; margin-bottom: 4px;">Enter Amount (USD)</span>
+                        <input type="number" id="npAmount" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; color: white; font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 8px;" placeholder="50" min="5" value="50">
+                        <span style="font-size: 14px; color: #8b92a8;">Minimum: $${NOWPAYMENTS_CONFIG.minDeposit}</span>
+                    </div>
+                    
+                    <div style="background: rgba(102,126,234,0.1); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                        <p style="font-size: 13px; color: #8b92a8; margin-bottom: 8px;">You will pay with:</p>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 40px; height: 40px; background: rgba(191,187,187,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">Ł</div>
+                            <div>
+                                <p style="font-weight: 600; margin: 0;">Litecoin (LTC)</p>
+                                <p style="font-size: 12px; color: #8b92a8; margin: 0;">Fast & Low fees</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="npLoading" style="display: none; text-align: center; padding: 20px;">
+                        <p>Generating payment...</p>
+                    </div>
+
+                    <div id="npPaymentDetails" style="display: none;">
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <div id="npQrCode" style="width: 180px; height: 180px; background: white; border-radius: 12px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;">
+                                    <div style="color: #333; font-weight: 700;">QR CODE</div>
+                                </div>
+                                <p style="font-size: 13px; color: #8b92a8;">Send LTC to this address</p>
+                            </div>
+                            
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; font-size: 12px; color: #8b92a8; margin-bottom: 8px;">Payment Address</label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" id="npPayAddress" readonly style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-family: monospace; font-size: 13px;">
+                                    <button onclick="copyNpAddress()" style="padding: 12px 16px; background: rgba(102,126,234,0.2); border: 1px solid rgba(102,126,234,0.3); border-radius: 8px; cursor: pointer;">📋</button>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; font-size: 12px; color: #8b92a8; margin-bottom: 8px;">Amount to Send</label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" id="npPayAmount" readonly style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #22c55e; font-weight: 600;">
+                                    <span style="padding: 12px; color: #8b92a8;">LTC</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="processNowPayment()" id="npBtn" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 700; cursor: pointer;">Generate Payment</button>
+                    
+                    <div style="background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.2); border-radius: 8px; padding: 12px; margin-top: 16px;">
+                        <p style="font-size: 12px; color: #eab308; text-align: center; margin: 0;">⚠️ Funds will be automatically converted and sent to your trading balance after 3 confirmations.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function closeNowPaymentsModal() {
+    const modal = document.getElementById('nowpaymentsModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.getElementById('npPaymentDetails').style.display = 'none';
+        document.getElementById('npLoading').style.display = 'none';
+        const btn = document.getElementById('npBtn');
+        if (btn) {
+            btn.textContent = 'Generate Payment';
+            btn.disabled = false;
+            btn.onclick = processNowPayment;
+        }
+    }
+}
+
+async function processNowPayment() {
+    const amount = parseFloat(document.getElementById('npAmount').value);
+    
+    if (!amount || amount < NOWPAYMENTS_CONFIG.minDeposit) {
+        showToast('❌', `Minimum deposit is $${NOWPAYMENTS_CONFIG.minDeposit}`);
+        return;
+    }
+
+    const btn = document.getElementById('npBtn');
+    btn.textContent = 'Generating...';
+    btn.disabled = true;
+    document.getElementById('npLoading').style.display = 'block';
+
+    const payment = await createNowPayment(amount);
+    
+    document.getElementById('npLoading').style.display = 'none';
+    
+    if (payment && payment.success) {
+        document.getElementById('npPaymentDetails').style.display = 'block';
+        document.getElementById('npPayAddress').value = payment.payAddress;
+        document.getElementById('npPayAmount').value = payment.payAmount;
+        
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=litecoin:${payment.payAddress}?amount=${payment.payAmount}`;
+        document.getElementById('npQrCode').innerHTML = `<img src="${qrUrl}" style="width: 100%; height: 100%; border-radius: 8px;" onerror="this.parentElement.innerHTML='<div style=color:#333;font-weight:700;>QR Code</div>'">`;
+        
+        btn.textContent = 'Open in Wallet';
+        btn.onclick = () => {
+            window.location.href = `litecoin:${payment.payAddress}?amount=${payment.payAmount}`;
+        };
+        btn.disabled = false;
+        
+        showToast('✅', 'Send exact LTC amount shown');
+    } else {
+        btn.textContent = 'Generate Payment';
+        btn.disabled = false;
+    }
+}
+
+function copyNpAddress() {
+    const addr = document.getElementById('npPayAddress');
+    if (addr) {
+        addr.select();
+        document.execCommand('copy');
+        showToast('✅', 'Address copied');
+    }
+}
