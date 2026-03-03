@@ -844,3 +844,235 @@ document.addEventListener('keydown', (e) => {
         closeWalletModal();
     }
 });
+// ==================== NOWPAYMENTS INTEGRATION ====================
+
+const NOWPAYMENTS_CONFIG = {
+    apiUrl: window.location.origin.includes('localhost') 
+        ? 'http://localhost:3000' 
+        : window.location.origin,
+    minDeposit: 5 // $5 USD minimum
+};
+
+// Replace old deposit functions with NOWPayments
+async function createNowPayment(amountUSD) {
+    try {
+        const response = await fetch(`${NOWPAYMENTS_CONFIG.apiUrl}/api/create-payment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                amount: amountUSD,
+                email: state.currentUser?.email
+            })
+        });
+
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error);
+        }
+
+        return result.data;
+    } catch (error) {
+        console.error('Payment creation failed:', error);
+        showToast('❌', error.message);
+        return null;
+    }
+}
+
+// Override existing deposit modal function
+function showDepositModal() {
+    if (!state.isLoggedIn) {
+        showToast('❌', 'Please login first');
+        return;
+    }
+    
+    // Show custom NOWPayments modal
+    document.getElementById('nowpaymentsModal')?.classList.remove('hidden') 
+        || showNowPaymentsModal();
+}
+
+// New NOWPayments modal
+function showNowPaymentsModal() {
+    // Create modal if doesn't exist
+    let modal = document.getElementById('nowpaymentsModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'nowpaymentsModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-overlay" onclick="closeNowPaymentsModal()"></div>
+            <div class="modal-content slide-up">
+                <div class="modal-handle"></div>
+                <h3 class="modal-title">Deposit via Crypto</h3>
+                <div class="modal-body">
+                    <div class="deposit-info">
+                        <div class="minimum-deposit">
+                            <span class="label">Enter Amount (USD)</span>
+                            <input type="number" id="npAmount" class="amount-input" placeholder="50" min="5" value="50">
+                            <span class="usd">Minimum: $${NOWPAYMENTS_CONFIG.minDeposit}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-info-box" style="background: rgba(102,126,234,0.1); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                        <p style="font-size: 13px; color: #8b92a8; margin-bottom: 8px;">You will pay with:</p>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 40px; height: 40px; background: rgba(191, 187, 187, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">Ł</div>
+                            <div>
+                                <p style="font-weight: 600;">Litecoin (LTC)</p>
+                                <p style="font-size: 12px; color: #8b92a8;">Fast & Low fees</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="npPaymentDetails" class="hidden">
+                        <div class="payment-details">
+                            <div class="qr-section">
+                                <div class="qr-code" id="npQrCode">
+                                    <div class="qr-placeholder">Loading...</div>
+                                </div>
+                                <p class="qr-instruction">Send LTC to this address</p>
+                            </div>
+                            <div class="wallet-address-section">
+                                <label>Payment Address</label>
+                                <div class="address-box">
+                                    <input type="text" id="npPayAddress" readonly>
+                                    <button onclick="copyNpAddress()" class="copy-btn">📋</button>
+                                </div>
+                            </div>
+                            <div class="wallet-address-section">
+                                <label>Amount to Send</label>
+                                <div class="address-box">
+                                    <input type="text" id="npPayAmount" readonly style="color: #22c55e; font-weight: 600;">
+                                    <span style="padding: 12px; color: #8b92a8;">LTC</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="processNowPayment()" class="btn-confirm" id="npBtn">Generate Payment</button>
+                    
+                    <div class="deposit-warning">
+                        <p>⚠️ Funds will be automatically converted and sent to your trading balance after 3 confirmations.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    modal.classList.remove('hidden');
+}
+
+function closeNowPaymentsModal() {
+    document.getElementById('nowpaymentsModal')?.classList.add('hidden');
+    // Reset
+    document.getElementById('npPaymentDetails')?.classList.add('hidden');
+    document.getElementById('npBtn').textContent = 'Generate Payment';
+    document.getElementById('npBtn').onclick = processNowPayment;
+}
+
+async function processNowPayment() {
+    const amount = parseFloat(document.getElementById('npAmount').value);
+    
+    if (!amount || amount < NOWPAYMENTS_CONFIG.minDeposit) {
+        showToast('❌', `Minimum deposit is $${NOWPAYMENTS_CONFIG.minDeposit}`);
+        return;
+    }
+
+    const btn = document.getElementById('npBtn');
+    btn.textContent = 'Generating...';
+    btn.disabled = true;
+
+    const payment = await createNowPayment(amount);
+    
+    if (payment) {
+        // Show payment details
+        document.getElementById('npPaymentDetails').classList.remove('hidden');
+        document.getElementById('npPayAddress').value = payment.payAddress;
+        document.getElementById('npPayAmount').value = payment.payAmount;
+        
+        // Generate QR code URL
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=litecoin:${payment.payAddress}?amount=${payment.payAmount}`;
+        document.getElementById('npQrCode').innerHTML = `<img src="${qrUrl}" style="width: 100%; height: 100%; border-radius: 8px;">`;
+        
+        btn.textContent = 'I Have Made Payment';
+        btn.onclick = () => confirmNowPayment(payment.orderId);
+        btn.disabled = false;
+        
+        showToast('✅', 'Send exact LTC amount shown');
+        
+        // Start polling for status
+        startPaymentPolling(payment.orderId);
+    } else {
+        btn.textContent = 'Generate Payment';
+        btn.disabled = false;
+    }
+}
+
+function copyNpAddress() {
+    const addr = document.getElementById('npPayAddress');
+    addr.select();
+    document.execCommand('copy');
+    showToast('✅', 'Address copied');
+}
+
+async function confirmNowPayment(orderId) {
+    showToast('⏳', 'Checking payment status...');
+    
+    try {
+        const response = await fetch(`${NOWPAYMENTS_CONFIG.apiUrl}/api/payment-status/${orderId}`);
+        const result = await response.json();
+        
+        if (result.data?.status === 'finished' || result.data?.status === 'confirmed') {
+            // Payment complete
+            const amount = parseFloat(document.getElementById('npAmount').value);
+            state.hasInvested = true;
+            state.investedAmountUSD += amount;
+            state.investedAmountNGN += amount * state.exchangeRate;
+            state.balance += amount;
+            
+            saveUserData();
+            updateUI();
+            closeNowPaymentsModal();
+            showToast('✅', `Deposit of $${amount} successful!`);
+        } else {
+            showToast('⏳', 'Payment still processing. Check again in a few minutes.');
+        }
+    } catch (error) {
+        showToast('❌', 'Could not verify payment');
+    }
+}
+
+function startPaymentPolling(orderId) {
+    // Poll every 10 seconds for 5 minutes
+    let attempts = 0;
+    const maxAttempts = 30;
+    
+    const interval = setInterval(async () => {
+        attempts++;
+        
+        try {
+            const response = await fetch(`${NOWPAYMENTS_CONFIG.apiUrl}/api/payment-status/${orderId}`);
+            const result = await response.json();
+            
+            if (result.data?.status === 'finished') {
+                clearInterval(interval);
+                // Auto-complete
+                confirmNowPayment(orderId);
+            }
+        } catch (e) {
+            console.error('Polling error:', e);
+        }
+        
+        if (attempts >= maxAttempts) {
+            clearInterval(interval);
+        }
+    }, 10000);
+}
+
+// Close modal on escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeNowPaymentsModal();
+    }
+});
